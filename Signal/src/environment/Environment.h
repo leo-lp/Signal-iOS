@@ -6,7 +6,7 @@
 #import "TSGroupModel.h"
 #import "TSStorageHeaders.h"
 
-static NSString *const kCallSegue = @"2.0_6.0_Call_Segue";
+static NSString *const kRedphoneCallSegue = @"2.0_6.0_Call_Segue";
 
 /**
  *
@@ -24,6 +24,7 @@ static NSString *const kCallSegue = @"2.0_6.0_Call_Segue";
     @"LegacyAndroidInterop_1"
 #define TESTING_OPTION_USE_DH_FOR_HANDSHAKE @"DhKeyAgreementOnly"
 
+@class UINavigationController;
 @class RecentCallManager;
 @class OWSContactsManager;
 @class PhoneManager;
@@ -31,7 +32,11 @@ static NSString *const kCallSegue = @"2.0_6.0_Call_Segue";
 @class TSGroupThread;
 @class ContactsUpdater;
 @class TSNetworkManager;
+@class AccountManager;
+@class OWSWebRTCCallMessageHandler;
+@class CallService;
 @class OWSMessageSender;
+@class NotificationsManager;
 @class UINavigationController;
 
 @interface Environment : NSObject
@@ -52,6 +57,7 @@ static NSString *const kCallSegue = @"2.0_6.0_Call_Segue";
                 contactsManager:(OWSContactsManager *)contactsManager
                 contactsUpdater:(ContactsUpdater *)contactsUpdater
                  networkManager:(TSNetworkManager *)networkManager
+           notificationsManager:(NotificationsManager *)notificationsManager
                   messageSender:(OWSMessageSender *)messageSender;
 
 @property (nonatomic, readonly) in_port_t serverPort;
@@ -67,9 +73,13 @@ static NSString *const kCallSegue = @"2.0_6.0_Call_Segue";
 @property (nonatomic, readonly) NSArray *testingAndLegacyOptions;
 @property (nonatomic, readonly) NSData *zrtpClientId;
 @property (nonatomic, readonly) NSData *zrtpVersionId;
+@property (nonatomic, readonly) AccountManager *accountManager;
+@property (nonatomic, readonly) OWSWebRTCCallMessageHandler *callMessageHandler;
+@property (nonatomic, readonly) CallService *callService;
 @property (nonatomic, readonly) OWSContactsManager *contactsManager;
 @property (nonatomic, readonly) ContactsUpdater *contactsUpdater;
 @property (nonatomic, readonly) TSNetworkManager *networkManager;
+@property (nonatomic, readonly) NotificationsManager *notificationsManager;
 @property (nonatomic, readonly) OWSMessageSender *messageSender;
 
 @property (nonatomic, readonly) SignalsViewController *signalsViewController;

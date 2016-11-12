@@ -6,6 +6,7 @@
 #import "KeyAgreementProtocol.h"
 #import "MessagesViewController.h"
 #import "RecentCallManager.h"
+#import "Signal-Swift.h"
 #import "SignalKeyingStorage.h"
 #import "SignalsViewController.h"
 #import "TSContactThread.h"
@@ -17,6 +18,10 @@
 static Environment *environment = nil;
 
 @implementation Environment
+
+@synthesize accountManager = _accountManager;
+@synthesize callMessageHandler = _callMessageHandler;
+@synthesize callService = _callService;
 
 + (Environment *)getCurrent {
     NSAssert((environment != nil), @"Environment is not defined.");
@@ -67,6 +72,7 @@ static Environment *environment = nil;
                 contactsManager:(OWSContactsManager *)contactsManager
                 contactsUpdater:(ContactsUpdater *)contactsUpdater
                  networkManager:(TSNetworkManager *)networkManager
+           notificationsManager:(NotificationsManager *)notificationsManager
                   messageSender:(OWSMessageSender *)messageSender
 {
     ows_require(errorNoter != nil);
@@ -107,6 +113,7 @@ static Environment *environment = nil;
     _contactsManager = contactsManager;
     _contactsUpdater = contactsUpdater;
     _networkManager = networkManager;
+    _notificationsManager = notificationsManager;
     _messageSender = messageSender;
 
     if (recentCallManager != nil) {
@@ -117,6 +124,45 @@ static Environment *environment = nil;
     }
 
     return self;
+}
+
+- (AccountManager *)accountManager
+{
+    @synchronized (self) {
+        if (!_accountManager) {
+            _accountManager = [[AccountManager alloc] initWithTextSecureAccountManager:[TSAccountManager sharedInstance]
+                                                                redPhoneAccountManager:[RPAccountManager sharedInstance]];
+        }
+    }
+
+    return _accountManager;
+}
+
+- (OWSWebRTCCallMessageHandler *)callMessageHandler
+{
+    @synchronized (self) {
+        if (!_callMessageHandler) {
+            _callMessageHandler = [[OWSWebRTCCallMessageHandler alloc] initWithAccountManager:self.accountManager
+                                                                              contactsManager:self.contactsManager
+                                                                                messageSender:self.messageSender
+                                                                                  callService:self.callService];
+        }
+    }
+
+    return _callMessageHandler;
+}
+
+- (CallService *)callService
+{
+    @synchronized (self) {
+        if (!_callService) {
+            _callService = [[CallService alloc] initWithAccountManager:self.accountManager
+                                                         messageSender:self.messageSender];
+
+        }
+    }
+
+    return _callService;
 }
 
 + (PhoneManager *)phoneManager {
@@ -151,7 +197,7 @@ static Environment *environment = nil;
       SignalsViewController *vc = [[Environment getCurrent] signalsViewController];
       [vc dismissViewControllerAnimated:NO completion:nil];
       vc.latestCall = latestCall;
-      [vc performSegueWithIdentifier:kCallSegue sender:self];
+      [vc performSegueWithIdentifier:kRedphoneCallSegue sender:self];
     }
                                                      onThread:NSThread.mainThread
                                                untilCancelled:nil];

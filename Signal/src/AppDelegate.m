@@ -24,6 +24,8 @@
 #import <SignalServiceKit/OWSMessageSender.h>
 #import <SignalServiceKit/TSAccountManager.h>
 
+@import WebRTC;
+
 NSString *const AppDelegateStoryboardMain = @"Main";
 NSString *const AppDelegateStoryboardRegistration = @"Registration";
 
@@ -123,12 +125,10 @@ static NSString *const kURLHostVerifyPrefix             = @"verify";
             DDLogWarn(@"The app was launched in an unknown way");
         }
 
-        OWSAccountManager *accountManager =
-            [[OWSAccountManager alloc] initWithTextSecureAccountManager:[TSAccountManager sharedInstance]
-                                                 redPhoneAccountManager:[RPAccountManager sharedInstance]];
+        RTCInitializeSSL();
 
         [OWSSyncPushTokensJob runWithPushManager:[PushManager sharedManager]
-                                  accountManager:accountManager
+                                  accountManager:[Environment getCurrent].accountManager
                                      preferences:[Environment preferences]].then(^{
             DDLogDebug(@"%@ Successfully ran syncPushTokensJob.", self.tag);
         }).catch(^(NSError *_Nonnull error) {
@@ -149,15 +149,20 @@ static NSString *const kURLHostVerifyPrefix             = @"verify";
             gesture.numberOfTapsRequired = 8;
             [self.window addGestureRecognizer:gesture];
         });
+        RTCInitializeSSL();
     }];
 
     return YES;
 }
 
 - (void)setupTSKitEnv {
-    [TextSecureKitEnv sharedEnv].contactsManager = [Environment getCurrent].contactsManager;
+
+    TextSecureKitEnv *sharedEnv =
+        [[TextSecureKitEnv alloc] initWithCallMessageHandler:[Environment getCurrent].callMessageHandler
+                                             contactsManager:[Environment getCurrent].contactsManager
+                                        notificationsManager:[Environment getCurrent].notificationsManager];
+    [TextSecureKitEnv setSharedEnv:sharedEnv];
     [[TSStorageManager sharedManager] setupDatabase];
-    [TextSecureKitEnv sharedEnv].notificationsManager = [[NotificationsManager alloc] init];
 
     OWSMessageSender *messageSender =
         [[OWSMessageSender alloc] initWithNetworkManager:[Environment getCurrent].networkManager
